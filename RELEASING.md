@@ -11,7 +11,7 @@ approve the staged package on npm with 2FA.
 3. Run:
 
    ```sh
-   vp install
+   vp install --frozen-lockfile
    vp check
    vp test run
    vp run check:exports

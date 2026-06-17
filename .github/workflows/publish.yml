@@ -59,7 +59,7 @@ jobs:
           cache: false
 
       - name: Install dependencies
-        run: vp install
+        run: vp install --frozen-lockfile
 
       - name: Check formatting, lint, and types
         run: vp check
