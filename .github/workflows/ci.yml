@@ -16,8 +16,7 @@ jobs:
           node-version: "24"
           cache: true
 
-      - run: vp install
+      - run: vp install --frozen-lockfile
       - run: vp check # format, lint, and type checks
       - run: vp test run
-      - run: vp pack # build the library
-      - run: vp dlx publint
+      - run: vp run check:exports
