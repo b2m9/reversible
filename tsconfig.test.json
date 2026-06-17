@@ -1,0 +1,9 @@
+{
+  // Keeps editor/raw tsc coverage for Node-run files while tsconfig.json
+  // remains the shipped-source contract with no Node ambient globals.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["tests", "vite.config.ts"]
+}

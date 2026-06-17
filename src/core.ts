@@ -37,12 +37,24 @@ export function createHistory(options: HistoryOptions = {}): History {
     }
   };
 
+  const undoEntry = (): Entry | undefined => {
+    if (cursor === 0) return undefined;
+    // The cursor is kept in [0, length], so cursor - 1 names an undoable entry.
+    return entries[cursor - 1]!;
+  };
+
+  const redoEntry = (): Entry | undefined => {
+    if (cursor === entries.length) return undefined;
+    // The cursor is kept in [0, length], so cursor names a redoable entry.
+    return entries[cursor]!;
+  };
+
   const buildMeta = (): HistoryMeta =>
     Object.freeze({
       canUndo: cursor > 0,
       canRedo: cursor < entries.length,
-      undoLabel: cursor > 0 ? entries[cursor - 1].label : undefined,
-      redoLabel: cursor < entries.length ? entries[cursor].label : undefined,
+      undoLabel: undoEntry()?.label,
+      redoLabel: redoEntry()?.label,
       position: cursor,
       length: entries.length,
     });
@@ -88,11 +100,13 @@ export function createHistory(options: HistoryOptions = {}): History {
     while (remaining > 0) {
       if (dir < 0) {
         if (cursor === 0) break;
-        runGuarded(entries[cursor - 1].undo);
+        const entry = undoEntry()!;
+        runGuarded(entry.undo);
         cursor -= 1;
       } else {
         if (cursor === entries.length) break;
-        runGuarded(entries[cursor].do);
+        const entry = redoEntry()!;
+        runGuarded(entry.do);
         cursor += 1;
       }
       remaining -= 1;
@@ -154,7 +168,7 @@ export function createHistory(options: HistoryOptions = {}): History {
 
   const checkpoint = (name: string): void => {
     assertIdle();
-    checkpoints.set(name, cursor === 0 ? START : entries[cursor - 1]);
+    checkpoints.set(name, cursor === 0 ? START : undoEntry()!);
   };
 
   const hasCheckpoint = (name: string): boolean => checkpoints.has(name);
@@ -218,10 +232,10 @@ export function createHistory(options: HistoryOptions = {}): History {
       return cursor < entries.length;
     },
     get undoLabel() {
-      return cursor > 0 ? entries[cursor - 1].label : undefined;
+      return undoEntry()?.label;
     },
     get redoLabel() {
-      return cursor < entries.length ? entries[cursor].label : undefined;
+      return redoEntry()?.label;
     },
     get position() {
       return cursor;

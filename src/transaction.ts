@@ -86,7 +86,9 @@ export function runTransaction(
     closed = true;
     try {
       for (let i = ops.length - 1; i >= 0; i -= 1) {
-        engine.runGuarded(ops[i].undo);
+        // The reverse walk starts at the last recorded op and stops before -1.
+        const op = ops[i]!;
+        engine.runGuarded(op.undo);
       }
     } finally {
       engine.endMutation();
@@ -106,7 +108,9 @@ export function runTransaction(
     },
     undo() {
       for (let i = ops.length - 1; i >= 0; i -= 1) {
-        engine.runGuarded(ops[i].undo);
+        // The reverse walk starts at the last recorded op and stops before -1.
+        const op = ops[i]!;
+        engine.runGuarded(op.undo);
       }
     },
   });
