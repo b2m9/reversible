@@ -1,17 +1,20 @@
 {
   "name": "@b2m9/reversible",
-  "version": "0.1.0",
-  "description": "Headless, framework-agnostic undo/redo for any state — a small command stack of reversible operations with grouped transactions, checkpoints, and timeline scrubbing.",
+  "version": "0.1.1",
+  "description": "Headless, framework-agnostic undo/redo that stores inverse operations, not snapshots — with grouped transactions and checkpoints.",
   "keywords": [
     "checkpoint",
     "command-pattern",
+    "framework-agnostic",
     "headless",
     "history",
     "redo",
     "state",
     "time-travel",
     "transaction",
-    "undo"
+    "typescript",
+    "undo",
+    "undo-redo"
   ],
   "homepage": "https://github.com/b2m9/reversible#readme",
   "bugs": {
