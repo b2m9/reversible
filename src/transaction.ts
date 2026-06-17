@@ -21,6 +21,19 @@ export interface EngineInternals {
 }
 
 /**
+ * True if `value` is a thenable (exposes a callable `then`). The single source of
+ * truth for the engine's synchronous-only contract: a `do`/`undo` or transaction
+ * builder that returns one has detached work the engine can never reverse.
+ */
+export function isThenable(value: unknown): boolean {
+  return (
+    value !== null &&
+    value !== undefined &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
+}
+
+/**
  * Run a transaction: apply each committed operation eagerly, and on success
  * collapse them into one entry whose `do` replays forward and whose `undo`
  * replays the inverses in strict reverse order.
@@ -39,16 +52,38 @@ export function runTransaction(
   engine.beginMutation();
 
   const ops: Reversible[] = [];
+  // The builder is valid only for the synchronous span of `build`. Once that
+  // returns (or throws), `closed` rejects any captured/escaped `tx.commit` so a
+  // late op can neither mutate state untracked nor push onto the live `ops` array
+  // the recorded entry closes over.
+  let closed = false;
   const tx: TransactionBuilder = {
     commit(action) {
+      if (closed) {
+        throw new Error("reversible: transaction builder used after the transaction finished");
+      }
       engine.runGuarded(action.do);
-      ops.push(action);
+      // Copy the op; don't retain the caller's mutable action object.
+      ops.push({ do: action.do, undo: action.undo });
     },
   };
 
   try {
-    build(tx);
+    const result = (build as (tx: TransactionBuilder) => unknown)(tx);
+    closed = true;
+    // An async builder records only its synchronous prefix and lets later commits
+    // escape; reject it loudly, matching the sync-only contract on do/undo.
+    if (isThenable(result)) {
+      // The builder's continuation is detached and unreversible; its later commits
+      // hit `closed` and reject. Swallow that rejection so a contract violation we
+      // already threw on cannot also crash the host process.
+      void Promise.resolve(result).catch(() => {});
+      throw new TypeError(
+        "reversible: transaction builder must be synchronous (it returned a thenable)",
+      );
+    }
   } catch (error) {
+    closed = true;
     try {
       for (let i = ops.length - 1; i >= 0; i -= 1) {
         engine.runGuarded(ops[i].undo);

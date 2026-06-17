@@ -1,5 +1,5 @@
 import type { History, HistoryMeta, HistoryOptions, Reversible } from "./types.ts";
-import { type Entry, type EngineInternals, runTransaction } from "./transaction.ts";
+import { type Entry, type EngineInternals, isThenable, runTransaction } from "./transaction.ts";
 
 /** Sentinel anchor for a checkpoint at position 0 (before all entries). */
 const START = Symbol("reversible.start");
@@ -32,11 +32,7 @@ export function createHistory(options: HistoryOptions = {}): History {
   /** Run a user operation, throwing loudly if it returns a thenable. */
   const runGuarded = (fn: () => void): void => {
     const result = (fn as () => unknown)();
-    if (
-      result !== null &&
-      result !== undefined &&
-      typeof (result as { then?: unknown }).then === "function"
-    ) {
+    if (isThenable(result)) {
       throw new TypeError("reversible: do/undo must be synchronous (it returned a thenable)");
     }
   };

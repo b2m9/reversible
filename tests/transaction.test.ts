@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { createHistory } from "../src/index.ts";
+import type { TransactionBuilder } from "../src/index.ts";
 
 describe("transaction", () => {
   test("one undo reverts an entire transaction, inverses in reverse order", () => {
@@ -100,5 +101,76 @@ describe("transaction", () => {
 
     expect(log).toEqual(["do:a", "undo:a"]);
     expect(history.length).toBe(0);
+  });
+
+  test("the builder is rejected once the transaction has finished", () => {
+    const history = createHistory();
+    const log: string[] = [];
+    let escaped: TransactionBuilder | undefined;
+
+    history.transaction("capture", (tx) => {
+      escaped = tx;
+      tx.commit({
+        do: () => log.push("do:a"),
+        undo: () => log.push("undo:a"),
+      });
+    });
+    expect(history.length).toBe(1);
+
+    // An escaped builder cannot mutate state or corrupt the recorded entry.
+    expect(() =>
+      escaped?.commit({
+        do: () => log.push("do:late"),
+        undo: () => {},
+      }),
+    ).toThrow();
+    expect(log).toEqual(["do:a"]);
+    expect(history.length).toBe(1);
+  });
+
+  test("a real async builder throws synchronously, rolls back, and does not crash the host", async () => {
+    const history = createHistory();
+    const log: string[] = [];
+    let calls = 0;
+    history.subscribe(() => {
+      calls += 1;
+    });
+
+    let unhandled: unknown;
+    const onUnhandled = (reason: unknown): void => {
+      unhandled = reason;
+    };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      // A genuine async builder: it records its synchronous prefix, suspends, then
+      // tries to commit again from its detached continuation.
+      expect(() =>
+        history.transaction("async", async (tx) => {
+          tx.commit({
+            do: () => log.push("do:a"),
+            undo: () => log.push("undo:a"),
+          });
+          await Promise.resolve();
+          tx.commit({
+            do: () => log.push("do:b"),
+            undo: () => {},
+          });
+        }),
+      ).toThrow("synchronous");
+
+      // The synchronous prefix applied, then rolled back; nothing recorded or notified.
+      expect(log).toEqual(["do:a", "undo:a"]);
+      expect(history.length).toBe(0);
+      expect(calls).toBe(0);
+
+      // Let the detached continuation run: its late commit is rejected, never applies,
+      // and its rejection is swallowed rather than taking the host process down.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(log).toEqual(["do:a", "undo:a"]);
+      expect(history.length).toBe(0);
+      expect(unhandled).toBeUndefined();
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
   });
 });
