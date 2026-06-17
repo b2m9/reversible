@@ -1,3 +1,6 @@
+# Supply-chain cooldown: only install versions published at least 7 days ago,
+# giving compromised releases time to be caught and yanked (minutes).
+minimumReleaseAge: 10080
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
