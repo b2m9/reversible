@@ -21,7 +21,7 @@ ESM-only, Node ≥22. Toolchain is Vite+ (`vp`), not plain npm:
 - **No reentrancy.** Public mutations throw if called from inside a
   `do`/`undo`/rollback (`assertIdle`).
 - **Notify only on real change.** A failed `commit`, an empty `transaction`, and
-  a no-op `undo`/`redo`/`jump` notify *nobody*.
+  a no-op `undo`/`redo`/`jump` notify _nobody_.
 - **Checkpoints anchor to entries.** Pruned when their entry is evicted (`limit`
   overflow) or dropped (redo branch truncated by a fresh commit); `revertTo`
   throws on an unknown/pruned name.
@@ -30,7 +30,7 @@ ESM-only, Node ≥22. Toolchain is Vite+ (`vp`), not plain npm:
 
 ## Design principles
 
-This library's value is what it *doesn't* do. Hold the line:
+This library's value is what it _doesn't_ do. Hold the line:
 
 - Prefer removing code to adding it. A new option, parameter, or branch must
   earn its place — if a behavior composes from existing primitives, don't add a
@@ -44,7 +44,7 @@ This library's value is what it *doesn't* do. Hold the line:
 
 Match the comments already in `src/` — they are the style guide. The pattern:
 
-- Explain *why*, not *what*: the invariant being held or the failure being
+- Explain _why_, not _what_: the invariant being held or the failure being
   guarded, never a paraphrase of the code below.
 - Only at decision points — a guard, a non-obvious ordering, a deliberate
   no-op. Self-evident lines get nothing.
