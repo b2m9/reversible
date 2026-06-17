@@ -16,7 +16,8 @@ approve the staged package on npm with 2FA.
 - In GitHub, create the `npm-publish` environment and add a required reviewer if
   available.
 - Protect `main`.
-- Add a `v*` tag ruleset that prevents deletion and force updates.
+- Add a `v*` tag ruleset that restricts creation to release maintainers and
+  prevents deletion and force updates.
 - Require owner review for `.github/workflows/**` changes if branch protection
   and CODEOWNERS are configured.
 
