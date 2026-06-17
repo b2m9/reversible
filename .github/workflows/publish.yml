@@ -67,11 +67,8 @@ jobs:
       - name: Run tests
         run: vp test run
 
-      - name: Build package
-        run: vp pack
-
-      - name: Validate published package shape
-        run: vp dlx publint
+      - name: Validate package exports
+        run: vp run check:exports
 
       - name: Install npm with staged publishing support
         run: npm install --global npm@11.15.0

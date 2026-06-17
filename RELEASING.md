@@ -4,23 +4,6 @@ This package uses npm trusted publishing with GitHub Actions. The workflow stage
 new versions on npm, but does not make them live. A maintainer must review and
 approve the staged package on npm with 2FA.
 
-## One-time setup
-
-- In npm package settings, configure a Trusted Publisher for `b2m9/reversible`.
-- Set the workflow filename to `publish.yml`.
-- Set the environment name to `npm-publish`.
-- Allow only `npm stage publish`.
-- In npm publishing access, require two-factor authentication and disallow
-  tokens.
-- Revoke any npm automation tokens for this package.
-- In GitHub, create the `npm-publish` environment and add a required reviewer if
-  available.
-- Protect `main`.
-- Add a `v*` tag ruleset that restricts creation to release maintainers and
-  prevents deletion and force updates.
-- Require owner review for `.github/workflows/**` changes if branch protection
-  and CODEOWNERS are configured.
-
 ## Release checklist
 
 1. Make sure `main` is green and contains the release commit.
@@ -31,8 +14,7 @@ approve the staged package on npm with 2FA.
    vp install
    vp check
    vp test run
-   vp pack
-   vp dlx publint
+   vp run check:exports
    ```
 
 4. Commit the version bump.
