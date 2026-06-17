@@ -1,34 +1,52 @@
-<!--VITE PLUS START-->
+# @b2m9/reversible — agent guide
 
-# Using Vite+, the Unified Toolchain for the Web
+`@b2m9/reversible` is a headless, synchronous undo/redo engine that stores
+inverse operations (`do`/`undo`), not snapshots, and never owns your state. The
+public contract is in `src/types.ts` (JSDoc) and the model is explained in
+`README.md` — read those first. This file lists only what those don't: the
+constraints the compiler won't enforce, and how we make changes here.
 
-This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
+## Toolchain
 
-Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+ESM-only, Node ≥22. Toolchain is Vite+ (`vp`), not plain npm:
+`vp check` (format/lint/types), `vp test run`, `vp pack` (build).
 
-## Review Checklist
+## Constraints to preserve
 
-- [ ] Run `vp install` after pulling remote changes and before getting started.
-- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
-- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
-- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
+- **Zero runtime dependencies.** The core ships only its own code.
+- **Synchronous only.** `do`, `undo`, and the transaction builder must not
+  return thenables — the engine throws if they do.
+- **Headless.** The engine runs callbacks and moves a cursor; it never reads or
+  writes application state.
+- **No reentrancy.** Public mutations throw if called from inside a
+  `do`/`undo`/rollback (`assertIdle`).
+- **Notify only on real change.** A failed `commit`, an empty `transaction`, and
+  a no-op `undo`/`redo`/`jump` notify *nobody*.
+- **Checkpoints anchor to entries.** Pruned when their entry is evicted (`limit`
+  overflow) or dropped (redo branch truncated by a fresh commit); `revertTo`
+  throws on an unknown/pruned name.
+- **Rollback is reverse-order and best-effort.** A throwing inverse stops
+  rollback and surfaces.
 
-<!--VITE PLUS END-->
+## Design principles
 
-## About this package
+This library's value is what it *doesn't* do. Hold the line:
 
-`@b2m9/reversible` is a headless, framework-agnostic undo/redo engine. It stores
-inverse operations (`do`/`undo`), not state snapshots, and does not own your
-state. The engine is **synchronous** and its core has **zero runtime
-dependencies**.
+- Prefer removing code to adding it. A new option, parameter, or branch must
+  earn its place — if a behavior composes from existing primitives, don't add a
+  primitive for it.
+- Every public API entry is a lifetime maintenance cost. Default to "no"; make
+  the use case prove the surface is necessary.
+- A feature change that only adds public surface area is suspect. When
+  proposing one, say what it lets us delete or simplify.
 
-- `src/core.ts` — entry list, cursor, `commit`/`undo`/`redo`/`jump`, checkpoints,
-  `clear`, `subscribe`, derived meta, and the reentrancy / synchronous guards.
-- `src/transaction.ts` — the transaction builder and its rollback.
-- `src/types.ts` — the public `Reversible`, `History`, `HistoryMeta` shapes.
+## Comments
 
-The single normative source for failure/rollback/reentrancy behavior is the
-package brief. The one invariant the caller owns: **`do` and `undo` must be true
-inverses.**
+Match the comments already in `src/` — they are the style guide. The pattern:
 
-Build the library with `vp pack`; run the test matrix with `vp test`.
+- Explain *why*, not *what*: the invariant being held or the failure being
+  guarded, never a paraphrase of the code below.
+- Only at decision points — a guard, a non-obvious ordering, a deliberate
+  no-op. Self-evident lines get nothing.
+- Terse, full sentences, present tense. When in doubt, imitate the nearest
+  existing comment.

@@ -2,7 +2,7 @@
 
 Headless, framework-agnostic undo/redo for any state. You give it reversible
 operations; it gives you `undo`/`redo`/`jump` traversal, grouped transactions,
-checkpoints, and timeline scrubbing. It does **not** own your state — it composes
+checkpoints, and timeline scrubbing. It does **not** own your state, but composes
 with whatever store you already have.
 
 ```bash
@@ -37,7 +37,7 @@ The engine holds one ordered list of entries and a **cursor**:
 ```
 
 Everything left of the cursor can be undone; everything right can be redone.
-"Present state" is **your app's**, not the engine's — it only knows how to move
+"Present state" is **your app's**, not the engine's and it only knows how to move
 along the timeline of effects.
 
 > **The one responsibility you own:** `do` and `undo` must be true inverses.
