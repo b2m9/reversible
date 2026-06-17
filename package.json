@@ -1,0 +1,57 @@
+{
+  "name": "@b2m9/reversible",
+  "version": "0.1.0",
+  "description": "Headless, framework-agnostic undo/redo for any state — a small command stack of reversible operations with grouped transactions, checkpoints, and timeline scrubbing.",
+  "keywords": [
+    "checkpoint",
+    "command-pattern",
+    "headless",
+    "history",
+    "redo",
+    "state",
+    "time-travel",
+    "transaction",
+    "undo"
+  ],
+  "homepage": "https://github.com/b2m9/reversible#readme",
+  "bugs": {
+    "url": "https://github.com/b2m9/reversible/issues"
+  },
+  "license": "MIT",
+  "author": "Bob Massarczyk <bob@b2m9.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/b2m9/reversible.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run",
+    "check": "vp check",
+    "check:exports": "vp pack && vp dlx publint && vp dlx @arethetypeswrong/cli --pack --profile esm-only",
+    "prepublishOnly": "vp run build"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.2",
+    "@typescript/native-preview": "7.0.0-dev.20260509.2",
+    "bumpp": "^11.1.0",
+    "typescript": "^6.0.3",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.7.0"
+}
