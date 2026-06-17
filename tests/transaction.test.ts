@@ -173,4 +173,25 @@ describe("transaction", () => {
       process.off("unhandledRejection", onUnhandled);
     }
   });
+
+  test("a returned custom thenable is rejected without being assimilated", async () => {
+    const history = createHistory();
+    let thenInvoked = false;
+
+    // A lazy thenable, not a real promise. The engine must reject it as a sync
+    // violation without ever invoking its `then` — doing so would run the detached
+    // code the guard forbids.
+    const thenable: Record<string, unknown> = {};
+    // eslint-disable-next-line unicorn/no-thenable -- assigning `then` is the test's whole point
+    thenable.then = () => {
+      thenInvoked = true;
+    };
+
+    expect(() => history.transaction("thenable", () => thenable)).toThrow("synchronous");
+    expect(history.length).toBe(0);
+
+    // Give any accidental assimilation a microtask to fire; it must not.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(thenInvoked).toBe(false);
+  });
 });

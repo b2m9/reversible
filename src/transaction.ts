@@ -74,10 +74,10 @@ export function runTransaction(
     // An async builder records only its synchronous prefix and lets later commits
     // escape; reject it loudly, matching the sync-only contract on do/undo.
     if (isThenable(result)) {
-      // The builder's continuation is detached and unreversible; its later commits
-      // hit `closed` and reject. Swallow that rejection so a contract violation we
-      // already threw on cannot also crash the host process.
-      void Promise.resolve(result).catch(() => {});
+      // A real promise's detached continuation hits `closed`, rejects, and would
+      // crash the host; swallow that rejection. Narrow to actual promises so we
+      // never assimilate (and thereby run) an arbitrary thenable's `then`.
+      if (result instanceof Promise) void result.catch(() => {});
       throw new TypeError(
         "reversible: transaction builder must be synchronous (it returned a thenable)",
       );
