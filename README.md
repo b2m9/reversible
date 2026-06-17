@@ -1,9 +1,11 @@
-# @b2m9/reversible
+# reversible
 
-Headless, framework-agnostic undo/redo for any state. You give it reversible
-operations; it gives you `undo`/`redo`/`jump` traversal, grouped transactions,
-checkpoints, and timeline scrubbing. It does **not** own your state, but composes
-with whatever store you already have.
+Headless, framework-agnostic undo/redo that stores inverse operations, not
+snapshots.
+
+You give it reversible operations; it gives you `undo`/`redo`/`jump` traversal,
+grouped transactions, checkpoints, and timeline scrubbing. It does **not** own
+your state, but composes with whatever store you already have.
 
 ```bash
 npm install @b2m9/reversible
