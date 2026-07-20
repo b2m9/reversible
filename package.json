@@ -1,6 +1,6 @@
 {
   "name": "@b2m9/reversible",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Headless, framework-agnostic undo/redo that stores inverse operations, not snapshots — with grouped transactions and checkpoints.",
   "keywords": [
     "checkpoint",
