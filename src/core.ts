@@ -65,26 +65,26 @@ export function createHistory(options: HistoryOptions = {}): History {
     for (const listener of listeners) listener(meta);
   };
 
-  /** Drop every checkpoint whose anchor is in `dead` — its state is unreachable. */
-  const pruneCheckpoints = (dead: ReadonlySet<Anchor>): void => {
+  /** Drop every checkpoint whose anchor was destroyed. */
+  const pruneCheckpoints = (dead: readonly Anchor[]): void => {
     for (const [name, anchor] of checkpoints) {
-      if (dead.has(anchor)) checkpoints.delete(name);
+      if (dead.includes(anchor)) checkpoints.delete(name);
     }
   };
 
   const append = (entry: Entry): void => {
     // A fresh commit drops the redo branch (entries right of the cursor).
     if (cursor < entries.length) {
-      pruneCheckpoints(new Set(entries.splice(cursor)));
+      pruneCheckpoints(entries.splice(cursor));
     }
     entries.push(entry);
     cursor += 1;
     // Evict the oldest entries past the cap. Eviction also kills START: the
-    // undos that reached position 0 are gone, so the state it named is
-    // unreachable — unlike a redo-branch drop, which leaves it intact.
+    // undos that reached position 0 are gone — unlike a redo-branch drop,
+    // which leaves it intact.
     if (limit !== undefined && entries.length > limit) {
       const overflow = entries.length - limit;
-      pruneCheckpoints(new Set<Anchor>(entries.splice(0, overflow)).add(START));
+      pruneCheckpoints([...entries.splice(0, overflow), START]);
       cursor -= overflow;
     }
   };
@@ -178,6 +178,7 @@ export function createHistory(options: HistoryOptions = {}): History {
     if (anchor === undefined) {
       throw new Error(`reversible: unknown checkpoint "${name}"`);
     }
+    // Pruning keeps the map free of stale anchors, so indexOf never returns -1.
     const target = anchor === START ? 0 : entries.indexOf(anchor) + 1;
     move(target - cursor);
   };
