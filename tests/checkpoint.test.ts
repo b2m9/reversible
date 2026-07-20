@@ -89,6 +89,29 @@ describe("checkpoints", () => {
     expect(() => history.revertTo("first")).toThrow();
   });
 
+  test("a position-0 checkpoint is pruned when eviction makes its state unreachable", () => {
+    const history = createHistory({ limit: 2 });
+    history.checkpoint("pristine"); // position 0, before any entry
+    history.commit(noop);
+    history.commit(noop);
+    history.commit(noop); // evicts entry 0 -> position 0 no longer names the pristine state
+
+    expect(history.hasCheckpoint("pristine")).toBe(false);
+    expect(() => history.revertTo("pristine")).toThrow();
+  });
+
+  test("a position-0 checkpoint survives a dropped redo branch", () => {
+    const history = createHistory();
+    history.checkpoint("pristine");
+    history.commit(noop);
+    history.undo();
+    history.commit(noop); // drops the redo branch; position 0 is still reachable
+
+    expect(history.hasCheckpoint("pristine")).toBe(true);
+    history.revertTo("pristine");
+    expect(history.position).toBe(0);
+  });
+
   test("a checkpoint in a dropped redo branch is pruned", () => {
     const history = createHistory();
     history.commit(noop); // e1

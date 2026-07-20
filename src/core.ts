@@ -65,13 +65,10 @@ export function createHistory(options: HistoryOptions = {}): History {
     for (const listener of listeners) listener(meta);
   };
 
-  const pruneCheckpoints = (removed: Entry[]): void => {
-    if (checkpoints.size === 0 || removed.length === 0) return;
-    const removedSet = new Set<Entry>(removed);
+  /** Drop every checkpoint whose anchor was destroyed. */
+  const pruneCheckpoints = (dead: readonly Anchor[]): void => {
     for (const [name, anchor] of checkpoints) {
-      if (anchor !== START && removedSet.has(anchor)) {
-        checkpoints.delete(name);
-      }
+      if (dead.includes(anchor)) checkpoints.delete(name);
     }
   };
 
@@ -82,10 +79,12 @@ export function createHistory(options: HistoryOptions = {}): History {
     }
     entries.push(entry);
     cursor += 1;
-    // Evict the oldest entries past the cap.
+    // Evict the oldest entries past the cap. Eviction also kills START: the
+    // undos that reached position 0 are gone — unlike a redo-branch drop,
+    // which leaves it intact.
     if (limit !== undefined && entries.length > limit) {
       const overflow = entries.length - limit;
-      pruneCheckpoints(entries.splice(0, overflow));
+      pruneCheckpoints([...entries.splice(0, overflow), START]);
       cursor -= overflow;
     }
   };
@@ -179,6 +178,7 @@ export function createHistory(options: HistoryOptions = {}): History {
     if (anchor === undefined) {
       throw new Error(`reversible: unknown checkpoint "${name}"`);
     }
+    // Pruning keeps the map free of stale anchors, so indexOf never returns -1.
     const target = anchor === START ? 0 : entries.indexOf(anchor) + 1;
     move(target - cursor);
   };
