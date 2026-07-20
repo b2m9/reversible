@@ -144,8 +144,9 @@ history.subscribe((meta) => { /* ... */ }); // returns unsubscribe
 
 With `limit`, the oldest entries are evicted past the cap. Checkpoints anchor to
 the entry they sit after, so they stay correct as eviction renumbers positions; a
-checkpoint whose anchor is evicted (or dropped when a commit clears a redo branch)
-is pruned, and `revertTo` on it throws.
+checkpoint whose state becomes unreachable — its anchor evicted, dropped when a
+commit clears a redo branch, or (for a position-0 checkpoint) any eviction at
+all — is pruned, and `revertTo` on it throws.
 
 ## Non-goals
 

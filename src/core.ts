@@ -65,27 +65,26 @@ export function createHistory(options: HistoryOptions = {}): History {
     for (const listener of listeners) listener(meta);
   };
 
-  const pruneCheckpoints = (removed: Entry[]): void => {
-    if (checkpoints.size === 0 || removed.length === 0) return;
-    const removedSet = new Set<Entry>(removed);
+  /** Drop every checkpoint whose anchor is in `dead` — its state is unreachable. */
+  const pruneCheckpoints = (dead: ReadonlySet<Anchor>): void => {
     for (const [name, anchor] of checkpoints) {
-      if (anchor !== START && removedSet.has(anchor)) {
-        checkpoints.delete(name);
-      }
+      if (dead.has(anchor)) checkpoints.delete(name);
     }
   };
 
   const append = (entry: Entry): void => {
     // A fresh commit drops the redo branch (entries right of the cursor).
     if (cursor < entries.length) {
-      pruneCheckpoints(entries.splice(cursor));
+      pruneCheckpoints(new Set(entries.splice(cursor)));
     }
     entries.push(entry);
     cursor += 1;
-    // Evict the oldest entries past the cap.
+    // Evict the oldest entries past the cap. Eviction also kills START: the
+    // undos that reached position 0 are gone, so the state it named is
+    // unreachable — unlike a redo-branch drop, which leaves it intact.
     if (limit !== undefined && entries.length > limit) {
       const overflow = entries.length - limit;
-      pruneCheckpoints(entries.splice(0, overflow));
+      pruneCheckpoints(new Set<Anchor>(entries.splice(0, overflow)).add(START));
       cursor -= overflow;
     }
   };

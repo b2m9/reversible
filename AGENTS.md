@@ -22,9 +22,10 @@ ESM-only, Node ≥22. Toolchain is Vite+ (`vp`), not plain npm:
   `do`/`undo`/rollback (`assertIdle`).
 - **Notify only on real change.** A failed `commit`, an empty `transaction`, and
   a no-op `undo`/`redo`/`jump` notify _nobody_.
-- **Checkpoints anchor to entries.** Pruned when their entry is evicted (`limit`
-  overflow) or dropped (redo branch truncated by a fresh commit); `revertTo`
-  throws on an unknown/pruned name.
+- **Checkpoints anchor to entries.** Pruned when their state becomes
+  unreachable: their entry is evicted (`limit` overflow) or dropped (redo branch
+  truncated by a fresh commit), and a position-0 checkpoint on any eviction;
+  `revertTo` throws on an unknown/pruned name.
 - **Rollback is reverse-order and best-effort.** A throwing inverse stops
   rollback and surfaces.
 
